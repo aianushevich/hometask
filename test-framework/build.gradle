@@ -1,0 +1,22 @@
+plugins {
+    id "java"
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    testImplementation 'org.projectlombok:lombok:1.18.12'
+    testAnnotationProcessor 'org.projectlombok:lombok:1.18.12'
+    testImplementation 'io.rest-assured:rest-assured:4.1.0'
+    testImplementation 'junit:junit:4.12'
+    testImplementation 'com.google.code.gson:gson:2.8.5'
+}
+
+def host = "https://qa-quiz.natera.com"
+def token = "2e66c4c8-d6be-47cd-81e1-108b361065ee"
+test {
+    systemProperty "HOST", host
+    systemProperty "TOKEN", token
+}
