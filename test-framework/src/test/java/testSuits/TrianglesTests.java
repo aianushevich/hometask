@@ -15,7 +15,6 @@ import static org.junit.Assert.*;
 
 public class TrianglesTests {
     public static String authToken;
-    public static String testUser;
     private final static String INITIAL_INPUT = "3;4;5";
     private final static String ZERO_INPUT = "3;0;5";
     private final static String NEGATIVE_INPUT = "-3;-4;-5";
@@ -32,7 +31,6 @@ public class TrianglesTests {
     private final static String SEMICOLON_SEPARATOR = ";";
     private final static String EMPTY_SEPARATOR = "";
     private final static String DOT_SEPARATOR = ".";
-    private final static String FAKE_TRIANGLE_ID = "15d15ba9-1745-4aa2-824b-6c6b89367f53";
     private final static String UNAUTHORIZED_ERROR = "Unauthorized";
     private final static String UNPROCESSABLE_ERROR = "Unprocessable Entity";
     private final static String NOT_FOUND_ERROR = "Not Found";

@@ -7,10 +7,6 @@ import commonTestClasses.jsonObjects.ResultObject;
 import commonTestClasses.jsonObjects.TriangleObject;
 import io.restassured.response.Response;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-
 public class JsonConverter {
     public static TriangleObject[] jsonToTrianglesList(Response response) {
         return new Gson().fromJson(response.asString(), TriangleObject[].class);
