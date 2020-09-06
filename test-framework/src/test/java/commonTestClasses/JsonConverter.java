@@ -12,16 +12,6 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 
 public class JsonConverter {
-    private final static String FILE_BASE_PATH = "src/test/resources/";
-
-    public static String fileToString(String filePath) {
-        try {
-            return new String(Files.readAllBytes(Paths.get(FILE_BASE_PATH + filePath)));
-        } catch (IOException e) {
-            return null;
-        }
-    }
-
     public static TriangleObject[] jsonToTrianglesList(Response response) {
         return new Gson().fromJson(response.asString(), TriangleObject[].class);
     }

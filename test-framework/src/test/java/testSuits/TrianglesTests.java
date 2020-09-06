@@ -1,9 +1,11 @@
 package testSuits;
 
 import commonTestClasses.jsonObjects.ErrorObject;
+import commonTestClasses.jsonObjects.ResultObject;
 import commonTestClasses.jsonObjects.TriangleObject;
 import org.junit.After;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import static commonTestClasses.JsonConverter.inputObjectToJson;
@@ -15,16 +17,31 @@ public class TrianglesTests {
     public static String authToken;
     public static String testUser;
     private final static String INITIAL_INPUT = "3;4;5";
+    private final static String ZERO_INPUT = "3;0;5";
+    private final static String NEGATIVE_INPUT = "-3;-4;-5";
+    private final static String TWO_SIDES_INPUT = "3;4;";
+    private final static String FOUR_SIDES_INPUT = "3;4;5;6";
+    private final static String TOO_BIG_SIDE_INPUT = "3;4;10";
+    private final static String FLOAT_INPUT = "3.7;4.3;5.2";
+    private final static String SIDE_EQUALS_OTHERS_SUM_INPUT = "3;6;3";
+    private final static String EMPTY_SEPARATOR_INPUT = "345.1";
+    private final static String DOT_SEPARATOR_INPUT = "3.4.5";
+    private final static String SLASH_SEPARATOR_INPUT = "8/10/12";
+    private final static String INCORRECT_INPUT = "3;$;5";
+    private final static String SLASH_SEPARATOR = "/";
+    private final static String SEMICOLON_SEPARATOR = ";";
+    private final static String EMPTY_SEPARATOR = "";
+    private final static String DOT_SEPARATOR = ".";
     private final static String FAKE_TRIANGLE_ID = "15d15ba9-1745-4aa2-824b-6c6b89367f53";
     private final static String UNAUTHORIZED_ERROR = "Unauthorized";
     private final static String UNPROCESSABLE_ERROR = "Unprocessable Entity";
+    private final static String NOT_FOUND_ERROR = "Not Found";
     private final static String UNPROCESSABLE_MESSAGE = "Limit exceeded";
 
     @BeforeClass
     public static void configureRestAssured() {
         authToken = System.getProperty("TOKEN");
         baseURI = System.getProperty("HOST");
-        testUser = System.getProperty("TEST_USER");
     }
 
     /**
@@ -118,7 +135,9 @@ public class TrianglesTests {
      * 2. Verify it is not possible to create more than 10 triangles.
      */
 
+    // TODO: Delete @Ignore annotation after this bug will be fixed: https://github.com/aianushevich/hometask/issues/1
     @Test
+    @Ignore
     public void testTriangleCreationLimit() {
         while (getAllTriangles().length < 10)
             createTriangle(inputObjectToJson(INITIAL_INPUT));
@@ -129,17 +148,253 @@ public class TrianglesTests {
     }
 
     /**
-     * Test #: testTriangleCreationPositiveCase
-     * 1. Create triangle (POST /triangle).
-     * 2.
+     * Test #8: testTriangleCreationWithoutSeparatorPositiveCase
+     * 1. Create triangle (POST /triangle) using request without separator attribute.
+     * 2. Verify triangle has been successfully created.
      */
 
     @Test
-    public void testTriangleCreationPositiveCase() {
+    public void testTriangleCreationWithoutSeparatorPositiveCase() {
         TriangleObject triangle = createTriangle(inputObjectToJson(INITIAL_INPUT));
-        assertEquals(3.0, triangle.getFirstSide(), 0.0);
-        assertEquals(4.0, triangle.getSecondSide(), 0.0);
-        assertEquals(5.0, triangle.getThirdSide(), 0.0);
+        assertEquals(3.0f, triangle.getFirstSide(), 0.0);
+        assertEquals(4.0f, triangle.getSecondSide(), 0.0);
+        assertEquals(5.0f, triangle.getThirdSide(), 0.0);
+        triangle = getTriangleById(triangle.getId());
+        assertEquals(3.0f, triangle.getFirstSide(), 0.0);
+        assertEquals(4.0f, triangle.getSecondSide(), 0.0);
+        assertEquals(5.0f, triangle.getThirdSide(), 0.0);
+    }
+
+    /**
+     * Test #9: testTriangleCreationWithoutSeparatorNegativeCase
+     * 1. Create triangle (POST /triangle) with not semicolon separator using request without separator attribute.
+     * 2. Verify triangle hasn't been created.
+     */
+
+    @Test
+    public void testTriangleCreationWithoutSeparatorNegativeCase() {
+        int trianglesNumber = getAllTriangles().length;
+        ErrorObject error = createTriangleUnprocessable(inputObjectToJson(SLASH_SEPARATOR_INPUT));
+        assertEquals(UNPROCESSABLE_ERROR, error.getError());
+        assertEquals(trianglesNumber, getAllTriangles().length);
+    }
+
+    /**
+     * Test #10: testTriangleCreationWithSeparatorPositiveCase
+     * 1. Create triangle (POST /triangle) using request with separator attribute.
+     * 2. Verify triangle has been successfully created.
+     */
+
+    @Test
+    public void testTriangleCreationWithSeparatorPositiveCase() {
+        TriangleObject triangle = createTriangle(inputObjectToJson(SLASH_SEPARATOR, SLASH_SEPARATOR_INPUT));
+        assertEquals(8.0f, triangle.getFirstSide(), 0.0);
+        assertEquals(10.0f, triangle.getSecondSide(), 0.0);
+        assertEquals(12.0f, triangle.getThirdSide(), 0.0);
+        triangle = getTriangleById(triangle.getId());
+        assertEquals(8.0f, triangle.getFirstSide(), 0.0);
+        assertEquals(10.0f, triangle.getSecondSide(), 0.0);
+        assertEquals(12.0f, triangle.getThirdSide(), 0.0);
+    }
+
+    /**
+     * Test #11: testTriangleCreationWithSeparatorNegativeCase
+     * 1. Create triangle (POST /triangle) with semicolon separator using request with slash separator attribute.
+     * 2. Verify triangle hasn't been created.
+     */
+
+    @Test
+    public void testTriangleCreationWithSeparatorNegativeCase() {
+        int trianglesNumber = getAllTriangles().length;
+        ErrorObject error = createTriangleUnprocessable(inputObjectToJson(SLASH_SEPARATOR, INITIAL_INPUT));
+        assertEquals(UNPROCESSABLE_ERROR, error.getError());
+        assertEquals(trianglesNumber, getAllTriangles().length);
+    }
+
+    /**
+     * Test #12: testTriangleCreationWithTwoSides
+     * 1. Create triangle (POST /triangle) with only two sides.
+     * 2. Verify triangle hasn't been created.
+     */
+
+    @Test
+    public void testTriangleCreationWithTwoSides() {
+        int trianglesNumber = getAllTriangles().length;
+        ErrorObject error = createTriangleUnprocessable(inputObjectToJson(SEMICOLON_SEPARATOR, TWO_SIDES_INPUT));
+        assertEquals(UNPROCESSABLE_ERROR, error.getError());
+        assertEquals(trianglesNumber, getAllTriangles().length);
+    }
+
+    /**
+     * Test #13: testTriangleCreationWithFourSides
+     * 1. Create triangle (POST /triangle) with four sides.
+     * 2. Verify triangle hasn't been created.
+     */
+
+    // TODO: Delete @Ignore annotation after this bug will be fixed: https://github.com/aianushevich/hometask/issues/3
+    @Ignore
+    @Test
+    public void testTriangleCreationWithFourSides() {
+        int trianglesNumber = getAllTriangles().length;
+        ErrorObject error = createTriangleUnprocessable(inputObjectToJson(SEMICOLON_SEPARATOR, FOUR_SIDES_INPUT));
+        assertEquals(UNPROCESSABLE_ERROR, error.getError());
+        assertEquals(trianglesNumber, getAllTriangles().length);
+    }
+
+    /**
+     * Test #14: testTriangleCreationWithEmptySeparator
+     * 1. Create triangle (POST /triangle) using request with empty separator.
+     * 2. Verify triangle has been successfully created.
+     */
+
+    // TODO: Delete @Ignore annotation after this bug will be fixed: https://github.com/aianushevich/hometask/issues/2
+    @Ignore
+    @Test
+    public void testTriangleCreationWithEmptySeparator() {
+        TriangleObject triangle = createTriangle(inputObjectToJson(EMPTY_SEPARATOR, EMPTY_SEPARATOR_INPUT));
+        assertEquals(3.0f, triangle.getFirstSide(), 0.0);
+        assertEquals(4.0f, triangle.getSecondSide(), 0.0);
+        assertEquals(5.1f, triangle.getThirdSide(), 0.0);
+        triangle = getTriangleById(triangle.getId());
+        assertEquals(3.0f, triangle.getFirstSide(), 0.0);
+        assertEquals(4.0f, triangle.getSecondSide(), 0.0);
+        assertEquals(5.1f, triangle.getThirdSide(), 0.0);
+    }
+
+    /**
+     * Test #15: testTriangleCreationWithDotSeparator
+     * 1. Create triangle (POST /triangle) using request with dot separator.
+     * 2. Verify triangle has been successfully created.
+     */
+
+    // TODO: Delete @Ignore annotation after this bug will be fixed: https://github.com/aianushevich/hometask/issues/4
+    @Ignore
+    @Test
+    public void testTriangleCreationWithDotSeparator() {
+        TriangleObject triangle = createTriangle(inputObjectToJson(DOT_SEPARATOR, DOT_SEPARATOR_INPUT));
+        assertEquals(3.0f, triangle.getFirstSide(), 0.0);
+        assertEquals(4.0f, triangle.getSecondSide(), 0.0);
+        assertEquals(5.0f, triangle.getThirdSide(), 0.0);
+        triangle = getTriangleById(triangle.getId());
+        assertEquals(3.0f, triangle.getFirstSide(), 0.0);
+        assertEquals(4.0f, triangle.getSecondSide(), 0.0);
+        assertEquals(5.0f, triangle.getThirdSide(), 0.0);
+    }
+
+    /**
+     * Test #16: testTriangleDeletion
+     * 1. Create triangle (POST /triangle).
+     * 2. Delete created triangle (DELETE /triangle/<id>).
+     * 2. Verify triangle has been successfully deleted.
+     */
+
+    @Test
+    public void testTriangleDeletion() {
+        TriangleObject triangle = createTriangle(inputObjectToJson(INITIAL_INPUT));
+        triangle = getTriangleById(triangle.getId());
+        deleteTriangleById(triangle.getId());
+        ErrorObject error = getTriangleByIdNotFound(triangle.getId());
+        assertEquals(NOT_FOUND_ERROR, error.getError());
+    }
+
+    /**
+     * Test #17: testTriangleCreationWithNegativeParameters
+     * 1. Create triangle (POST /triangle) with negative parameters.
+     * 2. Verify triangle hasn't been created.
+     */
+
+    // TODO: Delete @Ignore annotation after this bug will be fixed: https://github.com/aianushevich/hometask/issues/5
+    @Ignore
+    @Test
+    public void testTriangleCreationWithNegativeParameters() {
+        int trianglesNumber = getAllTriangles().length;
+        ErrorObject error = createTriangleUnprocessable(inputObjectToJson(NEGATIVE_INPUT));
+        assertEquals(UNPROCESSABLE_ERROR, error.getError());
+        assertEquals(trianglesNumber, getAllTriangles().length);
+    }
+
+    /**
+     * Test #18: testTriangleCreationWithZeroParameter
+     * 1. Create triangle (POST /triangle) with zero parameter.
+     * 2. Verify triangle hasn't been created.
+     */
+
+    @Test
+    public void testTriangleCreationWithZeroParameter() {
+        int trianglesNumber = getAllTriangles().length;
+        ErrorObject error = createTriangleUnprocessable(inputObjectToJson(ZERO_INPUT));
+        assertEquals(UNPROCESSABLE_ERROR, error.getError());
+        assertEquals(trianglesNumber, getAllTriangles().length);
+    }
+
+    /**
+     * Test #19: testTriangleCreationWithOneSideBiggerThanBothOther
+     * 1. Create triangle (POST /triangle) with incorrect values (one side bigger than both other).
+     * 2. Verify triangle hasn't been created.
+     */
+
+    @Test
+    public void testTriangleCreationWithOneSideBiggerThanBothOther() {
+        int trianglesNumber = getAllTriangles().length;
+        ErrorObject error = createTriangleUnprocessable(inputObjectToJson(TOO_BIG_SIDE_INPUT));
+        assertEquals(UNPROCESSABLE_ERROR, error.getError());
+        assertEquals(trianglesNumber, getAllTriangles().length);
+    }
+
+    /**
+     * Test #20: testTriangleCreationWithOneSideEqualsBothOther
+     * 1. Create triangle (POST /triangle) with incorrect values (one side equals both other sum).
+     * 2. Verify triangle hasn't been created.
+     */
+
+    // TODO: Delete @Ignore annotation after this bug will be fixed: https://github.com/aianushevich/hometask/issues/6
+    @Ignore
+    @Test
+    public void testTriangleCreationWithOneSideEqualsBothOther() {
+        int trianglesNumber = getAllTriangles().length;
+        ErrorObject error = createTriangleUnprocessable(inputObjectToJson(SIDE_EQUALS_OTHERS_SUM_INPUT));
+        assertEquals(UNPROCESSABLE_ERROR, error.getError());
+        assertEquals(trianglesNumber, getAllTriangles().length);
+    }
+
+    /**
+     * Test #21: testTriangleCreationWithOneSideEqualsBothOther
+     * 1. Create triangle (POST /triangle).
+     * 2. Calculate perimeter and verify the result is correct.
+     */
+
+    @Test
+    public void testTrianglePerimeterCalculation() {
+        TriangleObject triangle = createTriangle(inputObjectToJson(FLOAT_INPUT));
+        ResultObject perimeter = getTrianglePerimeter(triangle.getId());
+        assertEquals(13.2f, perimeter.getResult(), 0.0);
+    }
+
+    /**
+     * Test #22: testTriangleCreationWithOneSideEqualsBothOther
+     * 1. Create triangle (POST /triangle).
+     * 2. Calculate area and verify the result is correct.
+     */
+
+    @Test
+    public void testTriangleAreaCalculation() {
+        TriangleObject triangle = createTriangle(inputObjectToJson(INITIAL_INPUT));
+        ResultObject perimeter = getTriangleArea(triangle.getId());
+        assertEquals(6.0f, perimeter.getResult(), 0.0);
+    }
+
+    /**
+     * Test #23: testTriangleCreationWithIncorrectInput
+     * 1. Create triangle (POST /triangle) with incorrect symbols in input.
+     * 2. Verify the triangle hasn't been created.
+     */
+
+    @Test
+    public void testTriangleCreationWithIncorrectInput() {
+        int trianglesNumber = getAllTriangles().length;
+        ErrorObject error = createTriangleUnprocessable(inputObjectToJson(INCORRECT_INPUT));
+        assertEquals(UNPROCESSABLE_ERROR, error.getError());
+        assertEquals(trianglesNumber, getAllTriangles().length);
     }
 
     @After

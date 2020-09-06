@@ -45,6 +45,15 @@ public class RestApi {
         return jsonToErrorObject(response);
     }
 
+    public static ErrorObject getTriangleByIdNotFound(String id) {
+        Response response = given()
+                .header("X-User", authToken)
+                .get(GET_BY_ID_PATH + id);
+        assertEquals(STATUS_NOT_FOUND, response.getStatusCode());
+        logger.info("Triangle hasn't been received. Check specified id");
+        return jsonToErrorObject(response);
+    }
+
     public static TriangleObject createTriangle(String body) {
         Response response = given().body(body)
                 .header("X-User", authToken)
